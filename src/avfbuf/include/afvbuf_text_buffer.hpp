@@ -106,15 +106,15 @@ namespace afv::buf
             size_type split_at{};
             auto const node_it{std::ranges::find_if(nodes_,
                 [running_sum = size_type{}, position, &split_at](
-                    node const& node) mutable noexcept
+                    node const& n) mutable noexcept
                 {
                     if (position >= running_sum &&
-                        position < running_sum + node.length)
+                        position < running_sum + n.length)
                     {
                         split_at = position - running_sum;
                         return true;
                     }
-                    running_sum += node.length;
+                    running_sum += n.length;
                     return false;
                 })};
 
