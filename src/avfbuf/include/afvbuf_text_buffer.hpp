@@ -1,10 +1,11 @@
 #pragma once
 
+#include <cstddef>
+#include <iterator>
 #include <memory>
 #include <memory_resource>
 #include <ranges>
 #include <string>
-#include <string_view>
 #include <type_traits>
 #include <vector>
 
