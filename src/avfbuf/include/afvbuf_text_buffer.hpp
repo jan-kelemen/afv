@@ -375,7 +375,7 @@ namespace afv::buf
         constexpr value_type& operator*() const noexcept
         {
             auto const& node{current_node()};
-            typename basic_text_buffer<CharT, Traits, Allocator>::buffer_t const&
+            typename basic_text_buffer<CharT, Traits, Allocator>::buffer_t&
                 buffer{buffers_[node.buffer_index]};
             auto const value_index{node.start_offset + local_index_};
             return buffer[value_index];
