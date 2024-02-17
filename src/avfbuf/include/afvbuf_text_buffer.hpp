@@ -389,10 +389,12 @@ namespace afv::buf
         constexpr value_type& operator*() const noexcept
         {
             auto const& node{current_node()};
+            // cppcheck-suppress-begin constVariableReference
             // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             typename basic_text_buffer<CharT, Traits, Allocator>::buffer_t&
                 buffer{buffers_[node.buffer_index]};
             // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+            // cppcheck-suppress-end constVariableReference
             auto const value_index{node.start_offset + local_index_};
             return buffer[value_index];
         }
