@@ -11,7 +11,7 @@ TEST_CASE("afv::buf::text_buffer construction")
     using text_buffer = afv::buf::text_buffer;
     SECTION("default ctor")
     {
-        text_buffer buffer;
+        text_buffer const buffer;
         REQUIRE(buffer.empty());
     }
 

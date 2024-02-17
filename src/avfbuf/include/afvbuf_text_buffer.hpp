@@ -78,9 +78,15 @@ namespace afv::buf
             std::is_nothrow_copy_constructible_v<buffer_container_t> &&
             std::is_nothrow_copy_constructible_v<node_container_t>) = default;
 
+        // clang-format off
+        // NOLINTBEGIN(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
+        // clang-format on
         constexpr basic_text_buffer(basic_text_buffer&&) noexcept(
             std::is_nothrow_move_constructible_v<buffer_container_t> &&
             std::is_nothrow_move_constructible_v<node_container_t>) = default;
+        // clang-format off
+        // NOLINTEND(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
+        // clang-format on
 
     public: // Destruction
         ~basic_text_buffer() = default;
@@ -136,8 +142,8 @@ namespace afv::buf
             }
 
             // Split the existing node into two and new node in the middle
-            node new_node{buffers_.size() - 1, 0, text.size()};
-            node new_split{node_it->buffer_index,
+            node const new_node{buffers_.size() - 1, 0, text.size()};
+            node const new_split{node_it->buffer_index,
                 split_at,
                 node_it->length - split_at};
 
@@ -182,9 +188,15 @@ namespace afv::buf
             std::is_nothrow_copy_assignable_v<buffer_container_t> &&
             std::is_nothrow_copy_assignable_v<node_container_t>) = default;
 
+        // clang-format off
+        // NOLINTBEGIN(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
+        // clang-format on
         constexpr basic_text_buffer& operator=(basic_text_buffer&&) noexcept(
             std::is_nothrow_move_assignable_v<buffer_container_t> &&
             std::is_nothrow_move_assignable_v<node_container_t>) = default;
+        // clang-format off
+        // NOLINTEND(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
+        // clang-format on
 
     private: // Data
         buffer_container_t buffers_;
