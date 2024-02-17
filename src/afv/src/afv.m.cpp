@@ -1,7 +1,9 @@
+#include <afvbuf_text_buffer.hpp>
+
 #include <array>
 #include <cstdio>
-#include <wchar.h>
 #include <string_view>
+#include <wchar.h>
 
 #define NOMINMAX
 #include <windows.h>
@@ -58,6 +60,59 @@ namespace
 
         return true;
     }
+
+    [[nodiscard]] void buffer_from(std::string_view path,
+        afv::buf::text_buffer& buffer)
+    {
+        FILE* const file{fopen(path.data(), "rb")};
+        if (file == nullptr)
+        {
+            throw std::runtime_error{"cant open file input file"};
+        }
+
+        fseek(file, 0, SEEK_END);
+        auto const bytes{static_cast<size_t>(ftell(file))};
+        fseek(file, 0, SEEK_SET);
+
+        std::array<char, 4096> tmp;
+        std::size_t remaining{bytes};
+
+        while (remaining != 0)
+        {
+            auto const number_of_bytes{std::min(remaining, tmp.size())};
+            auto const read{fread(tmp.data(), 1, number_of_bytes, file)};
+            if (ferror(file) || read != number_of_bytes)
+            {
+                throw std::runtime_error{"io error"};
+            }
+
+            buffer.insert(bytes - remaining,
+                tmp.data(),
+                tmp.data() + number_of_bytes);
+            remaining -= number_of_bytes;
+            // std::string_view view{tmp.data(), number_of_bytes};
+
+            // size_t current{};
+            // auto offset{view.find('\n')};
+            // while (offset != std::string_view::npos && Size.Y > 0)
+            //{
+            //     auto s = std::min<size_t>(offset - current, Size.X);
+            //     auto const written{
+            //         fwrite(tmp.data() + current, 1, s, stdout)};
+            //     if (ferror(stdout) || written != s)
+            //     {
+            //         return 4;
+            //     }
+
+            //    current = offset;
+            //    offset = view.find('\n', current + 1);
+            //    remaining -= offset - current + 1;
+            //    --Size.Y;
+            //}
+        }
+
+        fclose(file);
+    }
 } // namespace
 
 int main(int argc, char** argv)
@@ -66,16 +121,6 @@ int main(int argc, char** argv)
     {
         return 1;
     }
-
-    FILE* const file = fopen(argv[1], "rb");
-    if (file == nullptr)
-    {
-        return 2;
-    }
-
-    fseek(file, 0, SEEK_END); // seek to end of file
-    size_t const bytes{static_cast<size_t>(ftell(file))}; // get current file pointer
-    fseek(file, 0, SEEK_SET); // seek back to beginning of file
 
     if (!enable_virtual_terminal_mode())
     {
@@ -88,6 +133,15 @@ int main(int argc, char** argv)
         printf("Couldn't get the console handle. Quitting.\n");
         return -1;
     }
+
+    afv::buf::text_buffer buffer;
+    {
+        std::pmr::unsynchronized_pool_resource resource;
+        afv::buf::text_buffer tmp{&resource};
+        buffer_from(argv[1], tmp);
+        buffer = tmp;
+    }
+
     CONSOLE_SCREEN_BUFFER_INFO ScreenBufferInfo;
     GetConsoleScreenBufferInfo(hOut, &ScreenBufferInfo);
     COORD Size;
@@ -101,42 +155,9 @@ int main(int argc, char** argv)
     printf(CSI "0;0H");
     printf(CSI "2J"); // Clear screen
 
-    std::array<char, 4096> buffer;
-    std::size_t remaining{bytes};
-  
-    while (remaining != 0 && Size.Y > 0)
-    {
-        auto const number_of_bytes{std::min(remaining, buffer.size())};
-        auto const read{fread(buffer.data(), 1, number_of_bytes, file)};
-        if (ferror(file) || read != number_of_bytes)
-        {
-            return 3;
-        }
-        std::string_view view{buffer.data(), number_of_bytes};
+    printf("%d", 1);
 
-        size_t current{};
-        auto offset{view.find('\n')};
-        while (offset != std::string_view::npos && Size.Y > 0)
-        {
-            
-            auto s = std::min<size_t>(offset - current, Size.X);
-            auto const written{
-                fwrite(buffer.data() + current, 1, s, stdout)};
-            if (ferror(stdout) || written != s)
-            {
-                return 4;
-            }
-
-            current = offset;
-            offset = view.find('\n', current + 1);
-            remaining -= offset - current + 1;
-            --Size.Y;
-        }
-    }
-
-    fclose(file);
-
-    _getwch();
+    system("pause");
 
     printf(CSI "?1049l"); // Exit alternate buffer
 }

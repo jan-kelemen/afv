@@ -40,7 +40,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DCST_ENABLE_CLANG_TIDY=ON --preset conan-debug
+          cmake -DAFV_ENABLE_CLANG_TIDY=ON --preset conan-debug
 
       - name: Build
         run: |
@@ -93,7 +93,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DCST_ENABLE_IWYU=ON --preset conan-debug
+          cmake -DAFV_ENABLE_IWYU=ON --preset conan-debug
 
       - name: Build
         run: |
@@ -130,7 +130,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DCST_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset conan-debug
+          cmake -DAFV_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset conan-debug
 
       - name: Build
         run: |
@@ -181,7 +181,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DCST_ENABLE_CPPCHECK=ON --preset conan-debug
+          cmake -DAFV_ENABLE_CPPCHECK=ON --preset conan-debug
 
       - name: Build
         run: |
@@ -216,7 +216,7 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DCST_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset conan-default
+          cmake -DAFV_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset conan-default
           
       - name: Build
         run: |
