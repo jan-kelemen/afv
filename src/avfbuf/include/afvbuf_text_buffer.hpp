@@ -278,7 +278,6 @@ namespace afv::buf
 
         constexpr basic_text_buffer_const_iterator& operator--() noexcept
         {
-            auto const& node{current_node()};
             if (local_index_ == 0 && node_index_ > 0)
             {
                 local_index_ = (*nodes_)[--node_index_].length;
@@ -375,7 +374,7 @@ namespace afv::buf
         constexpr value_type& operator*() const noexcept
         {
             auto const& node{current_node()};
-            typename basic_text_buffer<CharT, Traits, Allocator>::buffer_t&
+            typename basic_text_buffer<CharT, Traits, Allocator>::buffer_t const&
                 buffer{buffers_[node.buffer_index]};
             auto const value_index{node.start_offset + local_index_};
             return buffer[value_index];
@@ -407,7 +406,6 @@ namespace afv::buf
 
         constexpr basic_text_buffer_iterator& operator--() noexcept
         {
-            auto const& node{current_node()};
             if (local_index_ == 0 && node_index_ > 0)
             {
                 local_index_ = (*nodes_)[--node_index_].length;
