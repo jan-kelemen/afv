@@ -3,6 +3,11 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <algorithm>
+#include <string>
+#include <string_view>
+#include <type_traits>
+
+// IWYU pragma: no_include <functional>
 
 TEST_CASE("afv::buf::text_buffer construction")
 {

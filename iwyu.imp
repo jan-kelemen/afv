@@ -24,6 +24,7 @@
   { include: [ "<bits/chrono.h>", private, "<chrono>", public ] },
   { include: [ "<bits/fs_path.h>", private, "<filesystem>", public ] },
   { include: [ "<bits/local_lim.h>", private, "<limits.h>", public ] },
+  { include: [ "<bits/memory_resource.h>", private, "<memory_resource>", public ] },
   { include: [ "<bits/refwrap.h>", private, "<functional>", public ] },
   { include: [ "<bits/shared_ptr.h>", private, "<memory>", public ] },
   { include: [ "<bits/std_function.h>", private, "<functional>", public ] },
