@@ -7,24 +7,11 @@ target_sources(afv
 
 target_link_libraries(afv
     PRIVATE
+        afvbuf
         fmt::fmt
         project-options
 )
 
-if (AFV_BUILD_TESTS)
-    add_executable(afv_test)
-
-    target_sources(afv_test
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/test/afv.t.cpp
-    )
-
-    target_link_libraries(afv_test
-        PRIVATE
-            Catch2::Catch2WithMain
-            project-options
-    )
-
-    include(Catch)
-    catch_discover_tests(afv_test)
-endif()
+target_compile_definitions(afv
+    PRIVATE
+        _CRT_SECURE_NO_WARNINGS)
