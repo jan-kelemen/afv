@@ -238,7 +238,7 @@ namespace afv::buf
 
         constexpr basic_text_buffer_const_iterator(
             basic_text_buffer<CharT, Traits, Allocator> const& buffer,
-            int)
+            [[maybe_unused]] int end_discriminator)
             : nodes_{&buffer.nodes_}
             , node_index_{buffer.nodes_.size()}
             , buffers_{buffer.buffers_.data()}
@@ -259,8 +259,10 @@ namespace afv::buf
         constexpr value_type& operator*() const noexcept
         {
             auto const& node{current_node()};
+            // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             typename basic_text_buffer<CharT, Traits, Allocator>::
                 buffer_t const& buffer{buffers_[node.buffer_index]};
+            // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             auto const value_index{node.start_offset + local_index_};
             return buffer[value_index];
         }
@@ -366,7 +368,7 @@ namespace afv::buf
 
         constexpr basic_text_buffer_iterator(
             basic_text_buffer<CharT, Traits, Allocator>& buffer,
-            int)
+            [[maybe_unused]] int end_discriminator)
             : nodes_{&buffer.nodes_}
             , node_index_{buffer.nodes_.size()}
             , buffers_{buffer.buffers_.data()}
@@ -387,8 +389,10 @@ namespace afv::buf
         constexpr value_type& operator*() const noexcept
         {
             auto const& node{current_node()};
+            // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             typename basic_text_buffer<CharT, Traits, Allocator>::buffer_t&
                 buffer{buffers_[node.buffer_index]};
+            // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             auto const value_index{node.start_offset + local_index_};
             return buffer[value_index];
         }
