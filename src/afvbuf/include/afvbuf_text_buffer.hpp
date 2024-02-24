@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
 #include <iterator>
 #include <memory>
@@ -36,7 +37,7 @@ namespace afv::buf
         using const_iterator =
             basic_text_buffer_const_iterator<basic_text_buffer>;
 
-    private: // Types
+    public:
         struct node
         {
             std::size_t buffer_index{};
@@ -97,59 +98,30 @@ namespace afv::buf
             return nodes_.empty();
         }
 
-        template<std::ranges::range Range>
-        constexpr void insert(size_type const position, Range const& range)
+        [[nodiscard]] constexpr size_type lines() const noexcept
         {
-            insert(position,
-                std::ranges::begin(range),
-                std::ranges::end(range));
+            if (empty())
+            {
+                return 0;
+            }
+
+            if (*std::prev(cend()) != '\n')
+            {
+                return lines_ + 1;
+            }
+
+            return lines_;
         }
+
+        template<std::ranges::forward_range Range>
+        constexpr void insert(size_type position, Range const& range);
 
         template<std::forward_iterator Iterator,
             std::sentinel_for<Iterator> Sentinel>
-        constexpr void
-        insert(size_type const position, Iterator begin, Sentinel end)
-        {
-            size_type split_at{};
-            auto const node_it{std::ranges::find_if(nodes_,
-                [running_sum = size_type{}, position, &split_at](
-                    node const& n) mutable noexcept
-                {
-                    if (position >= running_sum &&
-                        position < running_sum + n.length)
-                    {
-                        split_at = position - running_sum;
-                        return true;
-                    }
-                    running_sum += n.length;
-                    return false;
-                })};
+        constexpr void insert(size_type position, Iterator begin, Sentinel end);
 
-            auto const& text{buffers_.emplace_back(begin, end)};
-            if (node_it == nodes_.cend()) // Appending to end
-            {
-                nodes_.emplace_back(buffers_.size() - 1, 0, text.size());
-                return;
-            }
-
-            if (split_at == 0) // Add buffer before the current one
-            {
-                nodes_.insert(node_it,
-                    node{.buffer_index = buffers_.size() - 1,
-                        .start_offset = 0,
-                        .length = text.size()});
-                return;
-            }
-
-            // Split the existing node into two and new node in the middle
-            node const new_node{buffers_.size() - 1, 0, text.size()};
-            node const new_split{node_it->buffer_index,
-                split_at,
-                node_it->length - split_at};
-
-            node_it->length = split_at;
-            nodes_.insert(std::next(node_it), {new_node, new_split});
-        }
+        [[nodiscard]] constexpr std::ranges::subrange<const_iterator> line(
+            size_type line) const;
 
     public: // Iterators
         [[nodiscard]] constexpr iterator begin() noexcept
@@ -159,7 +131,7 @@ namespace afv::buf
 
         [[nodiscard]] constexpr iterator end() noexcept
         {
-            return iterator{*this, 0};
+            return iterator{*this, nodes_.size(), buffers_.data(), 0};
         }
 
         [[nodiscard]] constexpr const_iterator begin() const noexcept
@@ -169,7 +141,7 @@ namespace afv::buf
 
         [[nodiscard]] constexpr const_iterator end() const noexcept
         {
-            return const_iterator{*this, 0};
+            return const_iterator{*this, nodes_.size(), buffers_.data(), 0};
         }
 
         [[nodiscard]] constexpr const_iterator cbegin() const noexcept
@@ -179,7 +151,7 @@ namespace afv::buf
 
         [[nodiscard]] constexpr const_iterator cend() const noexcept
         {
-            return const_iterator{*this, 0};
+            return const_iterator{*this, nodes_.size(), buffers_.data(), 0};
         }
 
     public: // Operators
@@ -201,11 +173,90 @@ namespace afv::buf
     private: // Data
         buffer_container_t buffers_;
         node_container_t nodes_;
+        size_type lines_{};
 
     private:
         friend class basic_text_buffer_iterator<basic_text_buffer>;
         friend class basic_text_buffer_const_iterator<basic_text_buffer>;
     };
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr std::ranges::subrange<
+        typename basic_text_buffer<CharT, Traits, Allocator>::const_iterator>
+    basic_text_buffer<CharT, Traits, Allocator>::line(
+        basic_text_buffer::size_type line) const
+    {
+        auto begin{cbegin()};
+        auto end{cend()};
+        for (; begin != end && line > 0; ++begin)
+        {
+            if (*begin == '\n')
+            {
+                --line;
+            }
+        }
+        return std::ranges::subrange(begin,
+            std::ranges::find(begin, end, '\n'));
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    template<std::ranges::forward_range Range>
+    constexpr void basic_text_buffer<CharT, Traits, Allocator>::insert(
+        basic_text_buffer::size_type position,
+        Range const& range)
+    {
+        insert(position, std::ranges::begin(range), std::ranges::end(range));
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    template<std::forward_iterator Iterator,
+        std::sentinel_for<Iterator> Sentinel>
+    constexpr void basic_text_buffer<CharT, Traits, Allocator>::insert(
+        basic_text_buffer::size_type position,
+        Iterator begin,
+        Sentinel end)
+    {
+        size_type split_at{};
+        auto const node_it{std::ranges::find_if(nodes_,
+            [running_sum = size_type{}, position, &split_at](
+                node const& n) mutable noexcept
+            {
+                if (position >= running_sum &&
+                    position < running_sum + n.length)
+                {
+                    split_at = position - running_sum;
+                    return true;
+                }
+                running_sum += n.length;
+                return false;
+            })};
+
+        auto const& text{buffers_.emplace_back(begin, end)};
+        lines_ += static_cast<size_type>(std::ranges::count(text, '\n'));
+        if (node_it == nodes_.cend()) // Appending to end
+        {
+            nodes_.emplace_back(buffers_.size() - 1, 0, text.size());
+            return;
+        }
+
+        if (split_at == 0) // Add buffer before the current one
+        {
+            nodes_.insert(node_it,
+                node{.buffer_index = buffers_.size() - 1,
+                    .start_offset = 0,
+                    .length = text.size()});
+            return;
+        }
+
+        // Split the existing node into two and new node in the middle
+        node const new_node{buffers_.size() - 1, 0, text.size()};
+        node const new_split{node_it->buffer_index,
+            split_at,
+            node_it->length - split_at};
+
+        node_it->length = split_at;
+        nodes_.insert(std::next(node_it), {new_node, new_split});
+    }
 
     using text_buffer = basic_text_buffer<char>;
     using wtext_wbuffer = basic_text_buffer<wchar_t>;
@@ -238,11 +289,14 @@ namespace afv::buf
 
         constexpr basic_text_buffer_const_iterator(
             basic_text_buffer<CharT, Traits, Allocator> const& buffer,
-            [[maybe_unused]] int end_discriminator)
+            basic_text_buffer<CharT, Traits, Allocator>::size_type node_index,
+            basic_text_buffer<CharT, Traits, Allocator>::buffer_t const*
+                buffers,
+            basic_text_buffer<CharT, Traits, Allocator>::size_type local_index)
             : nodes_{&buffer.nodes_}
-            , node_index_{buffer.nodes_.size()}
-            , buffers_{buffer.buffers_.data()}
-            , local_index_{buffer.nodes_.back().length}
+            , node_index_{node_index}
+            , buffers_{buffers}
+            , local_index_{local_index}
         {
         }
 
@@ -275,9 +329,9 @@ namespace afv::buf
         constexpr basic_text_buffer_const_iterator& operator++() noexcept
         {
             auto const& node{current_node()};
-            if (++local_index_ == node.length &&
-                ++node_index_ != nodes_->size())
+            if (++local_index_ == node.length)
             {
+                ++node_index_;
                 local_index_ = 0;
             }
 
@@ -368,11 +422,13 @@ namespace afv::buf
 
         constexpr basic_text_buffer_iterator(
             basic_text_buffer<CharT, Traits, Allocator>& buffer,
-            [[maybe_unused]] int end_discriminator)
+            basic_text_buffer<CharT, Traits, Allocator>::size_type node_index,
+            basic_text_buffer<CharT, Traits, Allocator>::buffer_t* buffers,
+            basic_text_buffer<CharT, Traits, Allocator>::size_type local_index)
             : nodes_{&buffer.nodes_}
-            , node_index_{buffer.nodes_.size()}
-            , buffers_{buffer.buffers_.data()}
-            , local_index_{buffer.nodes_.back().length}
+            , node_index_{node_index}
+            , buffers_{buffers}
+            , local_index_{local_index}
         {
         }
 
@@ -407,9 +463,9 @@ namespace afv::buf
         constexpr basic_text_buffer_iterator& operator++() noexcept
         {
             auto const& node{current_node()};
-            if (++local_index_ == node.length &&
-                ++node_index_ != nodes_->size())
+            if (++local_index_ == node.length)
             {
+                ++node_index_;
                 local_index_ = 0;
             }
 
