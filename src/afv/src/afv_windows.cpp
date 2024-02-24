@@ -147,10 +147,10 @@ namespace afv
         CONSOLE_SCREEN_BUFFER_INFO ScreenBufferInfo;
         GetConsoleScreenBufferInfo(hOut, &ScreenBufferInfo);
         COORD Size;
-        Size.X =
-            ScreenBufferInfo.srWindow.Right - ScreenBufferInfo.srWindow.Left + 1;
-        Size.Y =
-            ScreenBufferInfo.srWindow.Bottom - ScreenBufferInfo.srWindow.Top + 1;
+        Size.X = ScreenBufferInfo.srWindow.Right -
+            ScreenBufferInfo.srWindow.Left + 1;
+        Size.Y = ScreenBufferInfo.srWindow.Bottom -
+            ScreenBufferInfo.srWindow.Top + 1;
 
         printf(CSI "?1049h"); // Enter alternate buffer
 
@@ -163,5 +163,4 @@ namespace afv
 
         printf(CSI "?1049l"); // Exit alternate buffer
     }
-}
-
+} // namespace afv

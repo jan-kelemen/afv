@@ -11,35 +11,35 @@
             "name": "clang-format",
             "hidden": true,
             "cacheVariables": {
-                "CST_ENABLE_CLANG_FORMAT": "ON"
+                "AFV_ENABLE_CLANG_FORMAT": "ON"
             }
         },
         {
             "name": "clang-tidy",
             "hidden": true,
             "cacheVariables": {
-                "CST_ENABLE_CLANG_TIDY": "ON"
+                "AFV_ENABLE_CLANG_TIDY": "ON"
             }
         },
         {
             "name": "static-analysis",
             "hidden": true,
             "cacheVariables": {
-                "CST_ENABLE_COMPILER_STATIC_ANALYSIS": "ON"
+                "AFV_ENABLE_COMPILER_STATIC_ANALYSIS": "ON"
             }
         },
         {
             "name": "cppcheck",
             "hidden": true,
             "cacheVariables": {
-                "CST_ENABLE_CPPCHECK": "ON"
+                "AFV_ENABLE_CPPCHECK": "ON"
             }
         },
         {
             "name": "iwyu",
             "hidden": true,
             "cacheVariables": {
-                "CST_ENABLE_IWYU": "ON"
+                "AFV_ENABLE_IWYU": "ON"
             }
         },
         {
