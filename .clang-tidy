@@ -1,7 +1,7 @@
 ﻿---
 Checks: '
   bugprone-*,
-  clang-analyzer-*,
+  clang-analyzer-*, 
   cppcoreguidelines-*,
   -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-avoid-do-while,

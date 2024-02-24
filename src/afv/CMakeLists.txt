@@ -15,7 +15,7 @@ target_sources(afv
 
 set(AFV_PLATFORM_LIBRARIES "")
 if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
-    list(APPEND AFV_PLATFORM_LIBRARIES Curses::Curses)
+    list(APPEND AFV_PLATFORM_LIBRARIES ${CURSES_LIBRARIES})
 endif()
 
 target_link_libraries(afv
