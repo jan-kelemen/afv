@@ -1,2 +1,2 @@
-add_subdirectory(avfbuf)
+add_subdirectory(afvbuf)
 add_subdirectory(afv)
