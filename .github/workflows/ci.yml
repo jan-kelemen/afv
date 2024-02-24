@@ -7,6 +7,10 @@ on:
     branches: [ "master" ]
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.head_ref || github.sha }}
+  cancel-in-progress: true
+
 jobs:
   linux:
     runs-on: ubuntu-22.04
@@ -53,15 +57,15 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake --preset conan-release
+          cmake --preset release
 
       - name: Build
         run: |
-          cmake --build --preset=conan-release
+          cmake --build --preset=release
       
       - name: Test
         run: |
-          ctest --preset conan-release || ctest --preset conan-release --rerun-failed --output-on-failure
+          ctest --preset release
 
   windows:
     runs-on: windows-2022
@@ -92,13 +96,13 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake --preset conan-default
+          cmake --preset default
           
       - name: Build
         run: |
-          cmake --build --preset=conan-release
+          cmake --build --preset=multi-release
 
       - name: Test
         run: |
-          ctest --preset conan-release || ctest --preset conan-release --rerun-failed --output-on-failure
+          ctest --preset multi-release
 

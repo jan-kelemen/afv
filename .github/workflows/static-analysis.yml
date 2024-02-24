@@ -40,11 +40,11 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DAFV_ENABLE_CLANG_TIDY=ON --preset conan-debug
+          cmake -DAFV_ENABLE_CLANG_TIDY=ON --preset debug
 
       - name: Build
         run: |
-          cmake --build --preset=conan-debug
+          cmake --build --preset=debug
 
   iwyu:
     runs-on: ubuntu-22.04
@@ -130,11 +130,11 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DAFV_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset conan-debug
+          cmake -DAFV_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset debug
 
       - name: Build
         run: |
-          cmake --build --preset=conan-debug
+          cmake --build --preset=debug
 
   cppcheck:
     runs-on: ubuntu-22.04
@@ -181,11 +181,11 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DAFV_ENABLE_CPPCHECK=ON --preset conan-debug
+          cmake -DAFV_ENABLE_CPPCHECK=ON --preset debug
 
       - name: Build
         run: |
-          cmake --build --preset=conan-debug
+          cmake --build --preset=debug
 
   msvc-analyze:
     runs-on: windows-2022
@@ -216,9 +216,9 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -DAFV_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset conan-default
+          cmake -DAFV_ENABLE_COMPILER_STATIC_ANALYSIS=ON --preset default
           
       - name: Build
         run: |
-          cmake --build --preset=conan-debug
+          cmake --build --preset=debug
 
