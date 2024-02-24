@@ -1,4 +1,2 @@
 add_subdirectory(avfbuf)
-if (MSVC)
-	add_subdirectory(afv)
-endif()
+add_subdirectory(afv)

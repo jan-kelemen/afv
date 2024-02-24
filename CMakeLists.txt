@@ -12,6 +12,10 @@ option(AFV_ENABLE_IWYU "Enable include-what-you-use in build" OFF)
 
 find_package(fmt REQUIRED)
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+    find_package(Curses REQUIRED)
+endif()
+
 if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
     include(CTest)
     if (BUILD_TESTING)
