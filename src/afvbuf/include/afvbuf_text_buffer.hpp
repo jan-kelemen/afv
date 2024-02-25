@@ -6,16 +6,30 @@
 #include <memory>
 #include <memory_resource>
 #include <ranges>
+#include <span>
 #include <string>
 #include <type_traits>
 #include <vector>
 
 namespace afv::buf
 {
-    template<typename Buffer>
+    namespace detail
+    {
+        template<typename CharT, typename Traits, typename Allocator>
+        using buffer = std::basic_string<CharT, Traits, Allocator>;
+
+        struct node final
+        {
+            std::size_t buffer_index{};
+            std::size_t start_offset{};
+            std::size_t length{};
+        };
+    } // namespace detail
+
+    template<typename CharT, typename Traits, typename Allocator>
     class basic_text_buffer_const_iterator;
 
-    template<typename Buffer>
+    template<typename CharT, typename Traits, typename Allocator>
     class basic_text_buffer_iterator;
 
     template<typename CharT,
@@ -33,58 +47,51 @@ namespace afv::buf
             std::allocator_traits<Allocator>::difference_type;
         using size_type = std::allocator_traits<Allocator>::size_type;
 
-        using iterator = basic_text_buffer_iterator<basic_text_buffer>;
+        using iterator = basic_text_buffer_iterator<CharT, Traits, Allocator>;
         using const_iterator =
-            basic_text_buffer_const_iterator<basic_text_buffer>;
+            basic_text_buffer_const_iterator<CharT, Traits, Allocator>;
 
-    public:
-        struct node
-        {
-            std::size_t buffer_index{};
-            std::size_t start_offset{};
-            std::size_t length{};
-        };
+    private:
+        using buffer = detail::buffer<CharT, Traits, Allocator>;
 
-        using buffer_t = std::basic_string<CharT, Traits, Allocator>;
+        using buffer_allocator =
+            std::allocator_traits<Allocator>::template rebind_alloc<buffer>;
 
-        using buffer_allocator_t =
-            std::allocator_traits<Allocator>::template rebind_alloc<buffer_t>;
+        using buffer_container = std::vector<buffer, buffer_allocator>;
 
-        using buffer_container_t = std::vector<buffer_t, buffer_allocator_t>;
+        using node_allocator = std::allocator_traits<
+            Allocator>::template rebind_alloc<detail::node>;
 
-        using node_allocator_t =
-            std::allocator_traits<Allocator>::template rebind_alloc<node>;
-
-        using node_container_t = std::vector<node, node_allocator_t>;
+        using node_container = std::vector<detail::node, node_allocator>;
 
     public: // Construction
         constexpr basic_text_buffer() noexcept(
             std::is_nothrow_constructible_v<Allocator> &&
-            std::is_nothrow_constructible_v<buffer_container_t, Allocator> &&
-            std::is_nothrow_constructible_v<node_container_t, Allocator>)
+            std::is_nothrow_constructible_v<buffer_container, Allocator> &&
+            std::is_nothrow_constructible_v<node_container, Allocator>)
             : buffers_{Allocator{}}
             , nodes_{Allocator{}}
         {
         }
 
         constexpr explicit basic_text_buffer(Allocator const& alloc) noexcept(
-            std::is_nothrow_constructible_v<buffer_container_t, Allocator> &&
-            std::is_nothrow_constructible_v<node_container_t, Allocator>)
+            std::is_nothrow_constructible_v<buffer_container, Allocator> &&
+            std::is_nothrow_constructible_v<node_container, Allocator>)
             : buffers_{alloc}
             , nodes_{alloc}
         {
         }
 
         constexpr basic_text_buffer(basic_text_buffer const&) noexcept(
-            std::is_nothrow_copy_constructible_v<buffer_container_t> &&
-            std::is_nothrow_copy_constructible_v<node_container_t>) = default;
+            std::is_nothrow_copy_constructible_v<buffer_container> &&
+            std::is_nothrow_copy_constructible_v<node_container>) = default;
 
         // clang-format off
         // NOLINTBEGIN(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
         // clang-format on
         constexpr basic_text_buffer(basic_text_buffer&&) noexcept(
-            std::is_nothrow_move_constructible_v<buffer_container_t> &&
-            std::is_nothrow_move_constructible_v<node_container_t>) = default;
+            std::is_nothrow_move_constructible_v<buffer_container> &&
+            std::is_nothrow_move_constructible_v<node_container>) = default;
         // clang-format off
         // NOLINTEND(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
         // clang-format on
@@ -126,58 +133,54 @@ namespace afv::buf
     public: // Iterators
         [[nodiscard]] constexpr iterator begin() noexcept
         {
-            return iterator{*this};
+            return {nodes_, 0, buffers_.data(), 0};
         }
 
         [[nodiscard]] constexpr iterator end() noexcept
         {
-            return iterator{*this, nodes_.size(), buffers_.data(), 0};
+            return {nodes_, nodes_.size(), buffers_.data(), 0};
         }
 
         [[nodiscard]] constexpr const_iterator begin() const noexcept
         {
-            return const_iterator{*this};
+            return {nodes_, 0, buffers_.data(), 0};
         }
 
         [[nodiscard]] constexpr const_iterator end() const noexcept
         {
-            return const_iterator{*this, nodes_.size(), buffers_.data(), 0};
+            return {nodes_, nodes_.size(), buffers_.data(), 0};
         }
 
         [[nodiscard]] constexpr const_iterator cbegin() const noexcept
         {
-            return const_iterator{*this};
+            return {nodes_, 0, buffers_.data(), 0};
         }
 
         [[nodiscard]] constexpr const_iterator cend() const noexcept
         {
-            return const_iterator{*this, nodes_.size(), buffers_.data(), 0};
+            return {nodes_, nodes_.size(), buffers_.data(), 0};
         }
 
     public: // Operators
         constexpr basic_text_buffer&
         operator=(basic_text_buffer const&) noexcept(
-            std::is_nothrow_copy_assignable_v<buffer_container_t> &&
-            std::is_nothrow_copy_assignable_v<node_container_t>) = default;
+            std::is_nothrow_copy_assignable_v<buffer_container> &&
+            std::is_nothrow_copy_assignable_v<node_container>) = default;
 
         // clang-format off
         // NOLINTBEGIN(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
         // clang-format on
         constexpr basic_text_buffer& operator=(basic_text_buffer&&) noexcept(
-            std::is_nothrow_move_assignable_v<buffer_container_t> &&
-            std::is_nothrow_move_assignable_v<node_container_t>) = default;
+            std::is_nothrow_move_assignable_v<buffer_container> &&
+            std::is_nothrow_move_assignable_v<node_container>) = default;
         // clang-format off
         // NOLINTEND(cppcoreguidelines-noexcept-move-operations, performance-noexcept-move-constructor)
         // clang-format on
 
     private: // Data
-        buffer_container_t buffers_;
-        node_container_t nodes_;
+        buffer_container buffers_;
+        node_container nodes_;
         size_type lines_{};
-
-    private:
-        friend class basic_text_buffer_iterator<basic_text_buffer>;
-        friend class basic_text_buffer_const_iterator<basic_text_buffer>;
     };
 
     template<typename CharT, typename Traits, typename Allocator>
@@ -219,7 +222,7 @@ namespace afv::buf
         size_type split_at{};
         auto const node_it{std::ranges::find_if(nodes_,
             [running_sum = size_type{}, position, &split_at](
-                node const& n) mutable noexcept
+                detail::node const& n) mutable noexcept
             {
                 if (position >= running_sum &&
                     position < running_sum + n.length)
@@ -242,15 +245,15 @@ namespace afv::buf
         if (split_at == 0) // Add buffer before the current one
         {
             nodes_.insert(node_it,
-                node{.buffer_index = buffers_.size() - 1,
+                detail::node{.buffer_index = buffers_.size() - 1,
                     .start_offset = 0,
                     .length = text.size()});
             return;
         }
 
         // Split the existing node into two and new node in the middle
-        node const new_node{buffers_.size() - 1, 0, text.size()};
-        node const new_split{node_it->buffer_index,
+        detail::node const new_node{buffers_.size() - 1, 0, text.size()};
+        detail::node const new_split{node_it->buffer_index,
             split_at,
             node_it->length - split_at};
 
@@ -258,45 +261,31 @@ namespace afv::buf
         nodes_.insert(std::next(node_it), {new_node, new_split});
     }
 
-    using text_buffer = basic_text_buffer<char>;
-    using wtext_wbuffer = basic_text_buffer<wchar_t>;
-    using u8text_buffer = basic_text_buffer<char8_t>;
-    using u16text_buffer = basic_text_buffer<char16_t>;
-    using u32text_buffer = basic_text_buffer<char32_t>;
-
     template<typename CharT, typename Traits, typename Allocator>
-    class basic_text_buffer_const_iterator<
-        basic_text_buffer<CharT, Traits, Allocator>>
-        final
+    class basic_text_buffer_const_iterator final
     {
     public: // Types
         using value_type = std::add_const_t<
             typename basic_text_buffer<CharT, Traits, Allocator>::value_type>;
-        using reference = std::add_const_t<
-            typename basic_text_buffer<CharT, Traits, Allocator>::reference>;
+        using element_type = value_type;
+        using reference = value_type&;
+        using pointer = value_type*;
         using difference_type =
             basic_text_buffer<CharT, Traits, Allocator>::difference_type;
+        using iterator_category = std::bidirectional_iterator_tag;
 
     public: // Construction
         constexpr basic_text_buffer_const_iterator() = default;
 
-        constexpr explicit basic_text_buffer_const_iterator(
-            basic_text_buffer<CharT, Traits, Allocator> const& buffer)
-            : nodes_{&buffer.nodes_}
-            , buffers_{buffer.buffers_.data()}
-        {
-        }
-
         constexpr basic_text_buffer_const_iterator(
-            basic_text_buffer<CharT, Traits, Allocator> const& buffer,
+            std::span<detail::node const> nodes,
             basic_text_buffer<CharT, Traits, Allocator>::size_type node_index,
-            basic_text_buffer<CharT, Traits, Allocator>::buffer_t const*
-                buffers,
-            basic_text_buffer<CharT, Traits, Allocator>::size_type local_index)
-            : nodes_{&buffer.nodes_}
+            detail::buffer<CharT, Traits, Allocator> const* buffers,
+            basic_text_buffer<CharT, Traits, Allocator>::size_type buffer_index)
+            : nodes_{nodes}
             , node_index_{node_index}
             , buffers_{buffers}
-            , local_index_{local_index}
+            , local_index_{buffer_index}
         {
         }
 
@@ -310,21 +299,17 @@ namespace afv::buf
         ~basic_text_buffer_const_iterator() = default;
 
     public: // Operators
-        constexpr value_type& operator*() const noexcept
+        constexpr reference operator*() const noexcept
         {
             auto const& node{current_node()};
             // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            typename basic_text_buffer<CharT, Traits, Allocator>::
-                buffer_t const& buffer{buffers_[node.buffer_index]};
+            auto const& buffer{buffers_[node.buffer_index]};
             // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
             auto const value_index{node.start_offset + local_index_};
             return buffer[value_index];
         }
 
-        constexpr value_type* operator->() const noexcept
-        {
-            return &(*(*this));
-        }
+        constexpr pointer operator->() const noexcept { return &(*(*this)); }
 
         constexpr basic_text_buffer_const_iterator& operator++() noexcept
         {
@@ -349,8 +334,8 @@ namespace afv::buf
         {
             if (local_index_ == 0 && node_index_ > 0)
             {
-                local_index_ = (*nodes_)[--node_index_].length;
-                // Intentional falltrough
+                local_index_ = nodes_[--node_index_].length;
+                // Intentional fallthrough
             }
 
             --local_index_;
@@ -373,62 +358,57 @@ namespace afv::buf
 
         constexpr friend bool operator==(
             basic_text_buffer_const_iterator const& lhs,
-            basic_text_buffer_const_iterator const& rhs) noexcept = default;
+            basic_text_buffer_const_iterator const& rhs) noexcept
+        {
+            return lhs.node_index_ == rhs.node_index_ &&
+                lhs.local_index_ == rhs.local_index_;
+        }
 
         constexpr friend bool operator!=(
             basic_text_buffer_const_iterator const& lhs,
-            basic_text_buffer_const_iterator const& rhs) noexcept = default;
+            basic_text_buffer_const_iterator const& rhs) noexcept
+        {
+            return !(lhs == rhs);
+        }
 
     private: // Helpers
-        [[nodiscard]] constexpr
-            typename basic_text_buffer<CharT, Traits, Allocator>::node const&
-            current_node() const noexcept
+        [[nodiscard]] constexpr detail::node const&
+        current_node() const noexcept
         {
-            return (*nodes_)[node_index_];
+            return nodes_[node_index_];
         }
 
     private: // Data
-        basic_text_buffer<CharT, Traits, Allocator>::node_container_t const*
-            nodes_{};
+        std::span<detail::node const> nodes_;
         size_t node_index_{};
-        basic_text_buffer<CharT, Traits, Allocator>::buffer_t const* buffers_{};
+        detail::buffer<CharT, Traits, Allocator> const* buffers_{};
         size_t local_index_{};
     };
 
-    static_assert(std::bidirectional_iterator<text_buffer::const_iterator>);
-
     template<typename CharT, typename Traits, typename Allocator>
-    class basic_text_buffer_iterator<
-        basic_text_buffer<CharT, Traits, Allocator>>
-        final
+    class basic_text_buffer_iterator final
     {
     public: // Types
         using value_type =
-            basic_text_buffer<CharT, Traits, Allocator>::value_type;
-        using reference =
-            basic_text_buffer<CharT, Traits, Allocator>::reference;
+            typename basic_text_buffer<CharT, Traits, Allocator>::value_type;
+        using element_type = value_type;
+        using reference = value_type&;
+        using pointer = value_type*;
         using difference_type =
             basic_text_buffer<CharT, Traits, Allocator>::difference_type;
+        using iterator_category = std::bidirectional_iterator_tag;
 
     public: // Construction
         constexpr basic_text_buffer_iterator() = default;
 
-        constexpr explicit basic_text_buffer_iterator(
-            basic_text_buffer<CharT, Traits, Allocator>& buffer)
-            : nodes_{&buffer.nodes_}
-            , buffers_{buffer.buffers_.data()}
-        {
-        }
-
-        constexpr basic_text_buffer_iterator(
-            basic_text_buffer<CharT, Traits, Allocator>& buffer,
+        constexpr basic_text_buffer_iterator(std::span<detail::node> nodes,
             basic_text_buffer<CharT, Traits, Allocator>::size_type node_index,
-            basic_text_buffer<CharT, Traits, Allocator>::buffer_t* buffers,
-            basic_text_buffer<CharT, Traits, Allocator>::size_type local_index)
-            : nodes_{&buffer.nodes_}
+            detail::buffer<CharT, Traits, Allocator>* buffers,
+            basic_text_buffer<CharT, Traits, Allocator>::size_type buffer_index)
+            : nodes_{nodes}
             , node_index_{node_index}
             , buffers_{buffers}
-            , local_index_{local_index}
+            , local_index_{buffer_index}
         {
         }
 
@@ -442,23 +422,17 @@ namespace afv::buf
         ~basic_text_buffer_iterator() = default;
 
     public: // Operators
-        constexpr value_type& operator*() const noexcept
+        constexpr reference operator*() const noexcept
         {
             auto const& node{current_node()};
-            // cppcheck-suppress-begin constVariableReference
             // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            typename basic_text_buffer<CharT, Traits, Allocator>::buffer_t&
-                buffer{buffers_[node.buffer_index]};
+            auto& buffer{buffers_[node.buffer_index]};
             // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            // cppcheck-suppress-end constVariableReference
             auto const value_index{node.start_offset + local_index_};
             return buffer[value_index];
         }
 
-        constexpr value_type* operator->() const noexcept
-        {
-            return &(*(*this));
-        }
+        constexpr pointer operator->() const noexcept { return &(*(*this)); }
 
         constexpr basic_text_buffer_iterator& operator++() noexcept
         {
@@ -483,8 +457,8 @@ namespace afv::buf
         {
             if (local_index_ == 0 && node_index_ > 0)
             {
-                local_index_ = (*nodes_)[--node_index_].length;
-                // Intentional falltrough
+                local_index_ = nodes_[--node_index_].length;
+                // Intentional fallthrough
             }
 
             --local_index_;
@@ -506,25 +480,38 @@ namespace afv::buf
             basic_text_buffer_iterator&&) noexcept = default;
 
         constexpr friend bool operator==(basic_text_buffer_iterator const& lhs,
-            basic_text_buffer_iterator const& rhs) noexcept = default;
+            basic_text_buffer_iterator const& rhs) noexcept
+        {
+            return lhs.node_index_ == rhs.node_index_ &&
+                lhs.local_index_ == rhs.local_index_;
+        }
 
         constexpr friend bool operator!=(basic_text_buffer_iterator const& lhs,
-            basic_text_buffer_iterator const& rhs) noexcept = default;
+            basic_text_buffer_iterator const& rhs) noexcept
+        {
+            return !(lhs == rhs);
+        }
 
     private: // Helpers
-        [[nodiscard]] constexpr
-            typename basic_text_buffer<CharT, Traits, Allocator>::node const&
-            current_node() const noexcept
+        [[nodiscard]] constexpr detail::node const&
+        current_node() const noexcept
         {
-            return (*nodes_)[node_index_];
+            return nodes_[node_index_];
         }
 
     private: // Data
-        basic_text_buffer<CharT, Traits, Allocator>::node_container_t* nodes_{};
+        std::span<detail::node const> nodes_;
         size_t node_index_{};
-        basic_text_buffer<CharT, Traits, Allocator>::buffer_t* buffers_{};
+        detail::buffer<CharT, Traits, Allocator>* buffers_{};
         size_t local_index_{};
     };
 
+    using text_buffer = basic_text_buffer<char>;
+    using wtext_wbuffer = basic_text_buffer<wchar_t>;
+    using u8text_buffer = basic_text_buffer<char8_t>;
+    using u16text_buffer = basic_text_buffer<char16_t>;
+    using u32text_buffer = basic_text_buffer<char32_t>;
+
+    static_assert(std::bidirectional_iterator<text_buffer::const_iterator>);
     static_assert(std::bidirectional_iterator<text_buffer::iterator>);
 } // namespace afv::buf
