@@ -303,56 +303,17 @@ namespace afv::buf
         ~basic_text_buffer_const_iterator() = default;
 
     public: // Operators
-        constexpr reference operator*() const noexcept
-        {
-            auto const& node{current_node()};
-            // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            auto const& buffer{buffers_[node.buffer_index]};
-            // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            auto const value_index{node.start_offset + local_index_};
-            return buffer[value_index];
-        }
+        constexpr reference operator*() const noexcept;
 
         constexpr pointer operator->() const noexcept { return &(*(*this)); }
 
-        constexpr basic_text_buffer_const_iterator& operator++() noexcept
-        {
-            auto const& node{current_node()};
-            if (++local_index_ == node.length)
-            {
-                ++node_index_;
-                local_index_ = 0;
-            }
+        constexpr basic_text_buffer_const_iterator& operator++() noexcept;
 
-            return *this;
-        }
+        constexpr basic_text_buffer_const_iterator operator++(int) noexcept;
 
-        constexpr basic_text_buffer_const_iterator operator++(int) noexcept
-        {
-            auto tmp{*this};
-            ++(*this);
-            return tmp;
-        }
+        constexpr basic_text_buffer_const_iterator& operator--() noexcept;
 
-        constexpr basic_text_buffer_const_iterator& operator--() noexcept
-        {
-            if (local_index_ == 0 && node_index_ > 0)
-            {
-                local_index_ = nodes_[--node_index_].length;
-                // Intentional fallthrough
-            }
-
-            --local_index_;
-
-            return *this;
-        }
-
-        constexpr basic_text_buffer_const_iterator operator--(int) noexcept
-        {
-            auto tmp{*this};
-            --(*this);
-            return tmp;
-        }
+        constexpr basic_text_buffer_const_iterator operator--(int) noexcept;
 
         constexpr basic_text_buffer_const_iterator& operator=(
             basic_text_buffer_const_iterator const&) noexcept = default;
@@ -388,6 +349,71 @@ namespace afv::buf
         detail::buffer<CharT, Traits, Allocator> const* buffers_{};
         size_t local_index_{};
     };
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_const_iterator<CharT, Traits, Allocator>::
+        reference
+        basic_text_buffer_const_iterator<CharT, Traits, Allocator>::operator*()
+            const noexcept
+    {
+        auto const& node{current_node()};
+        // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        auto const& buffer{buffers_[node.buffer_index]};
+        // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        auto const value_index{node.start_offset + local_index_};
+        return buffer[value_index];
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_const_iterator<CharT, Traits, Allocator>&
+    basic_text_buffer_const_iterator<CharT, Traits, Allocator>::
+    operator++() noexcept
+    {
+        auto const& node{current_node()};
+        if (++local_index_ == node.length)
+        {
+            ++node_index_;
+            local_index_ = 0;
+        }
+
+        return *this;
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_const_iterator<CharT, Traits, Allocator>
+    basic_text_buffer_const_iterator<CharT, Traits, Allocator>::operator++(
+        int) noexcept
+    {
+        auto tmp{*this};
+        ++(*this);
+        return tmp;
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_const_iterator<CharT, Traits, Allocator>&
+    basic_text_buffer_const_iterator<CharT, Traits, Allocator>::
+    operator--() noexcept
+    {
+        if (local_index_ == 0 && node_index_ > 0)
+        {
+            local_index_ = nodes_[--node_index_].length;
+            // Intentional fallthrough
+        }
+
+        --local_index_;
+
+        return *this;
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_const_iterator<CharT, Traits, Allocator>
+    basic_text_buffer_const_iterator<CharT, Traits, Allocator>::operator--(
+        int) noexcept
+    {
+        auto tmp{*this};
+        --(*this);
+        return tmp;
+    }
 
     template<typename CharT, typename Traits, typename Allocator>
     class basic_text_buffer_iterator final
@@ -426,56 +452,17 @@ namespace afv::buf
         ~basic_text_buffer_iterator() = default;
 
     public: // Operators
-        constexpr reference operator*() const noexcept
-        {
-            auto const& node{current_node()};
-            // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            auto& buffer{buffers_[node.buffer_index]};
-            // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            auto const value_index{node.start_offset + local_index_};
-            return buffer[value_index];
-        }
+        constexpr reference operator*() const noexcept;
 
         constexpr pointer operator->() const noexcept { return &(*(*this)); }
 
-        constexpr basic_text_buffer_iterator& operator++() noexcept
-        {
-            auto const& node{current_node()};
-            if (++local_index_ == node.length)
-            {
-                ++node_index_;
-                local_index_ = 0;
-            }
+        constexpr basic_text_buffer_iterator& operator++() noexcept;
 
-            return *this;
-        }
+        constexpr basic_text_buffer_iterator operator++(int) noexcept;
 
-        constexpr basic_text_buffer_iterator operator++(int) noexcept
-        {
-            auto tmp{*this};
-            ++(*this);
-            return tmp;
-        }
+        constexpr basic_text_buffer_iterator& operator--() noexcept;
 
-        constexpr basic_text_buffer_iterator& operator--() noexcept
-        {
-            if (local_index_ == 0 && node_index_ > 0)
-            {
-                local_index_ = nodes_[--node_index_].length;
-                // Intentional fallthrough
-            }
-
-            --local_index_;
-
-            return *this;
-        }
-
-        constexpr basic_text_buffer_iterator operator--(int) noexcept
-        {
-            auto tmp{*this};
-            --(*this);
-            return tmp;
-        }
+        constexpr basic_text_buffer_iterator operator--(int) noexcept;
 
         constexpr basic_text_buffer_iterator& operator=(
             basic_text_buffer_iterator const&) noexcept = default;
@@ -509,6 +496,70 @@ namespace afv::buf
         detail::buffer<CharT, Traits, Allocator>* buffers_{};
         size_t local_index_{};
     };
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_iterator<CharT, Traits, Allocator>::reference
+    basic_text_buffer_iterator<CharT, Traits, Allocator>::operator*()
+        const noexcept
+    {
+        auto const& node{current_node()};
+        // cppcheck-suppress-begin constVariableReference
+        // NOLINTBEGIN(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        auto& buffer{buffers_[node.buffer_index]};
+        // NOLINTEND(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        // cppcheck-suppress-end constVariableReference
+        auto const value_index{node.start_offset + local_index_};
+        return buffer[value_index];
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_iterator<CharT, Traits, Allocator>&
+    basic_text_buffer_iterator<CharT, Traits, Allocator>::operator++() noexcept
+    {
+        auto const& node{current_node()};
+        if (++local_index_ == node.length)
+        {
+            ++node_index_;
+            local_index_ = 0;
+        }
+
+        return *this;
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_iterator<CharT, Traits, Allocator>
+    basic_text_buffer_iterator<CharT, Traits, Allocator>::operator++(
+        int) noexcept
+    {
+        auto tmp{*this};
+        ++(*this);
+        return tmp;
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_iterator<CharT, Traits, Allocator>&
+    basic_text_buffer_iterator<CharT, Traits, Allocator>::operator--() noexcept
+    {
+        if (local_index_ == 0 && node_index_ > 0)
+        {
+            local_index_ = nodes_[--node_index_].length;
+            // Intentional fallthrough
+        }
+
+        --local_index_;
+
+        return *this;
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer_iterator<CharT, Traits, Allocator>
+    basic_text_buffer_iterator<CharT, Traits, Allocator>::operator--(
+        int) noexcept
+    {
+        auto tmp{*this};
+        --(*this);
+        return tmp;
+    }
 
     using text_buffer = basic_text_buffer<char>;
     using wtext_wbuffer = basic_text_buffer<wchar_t>;
