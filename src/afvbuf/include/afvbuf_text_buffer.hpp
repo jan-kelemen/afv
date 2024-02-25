@@ -105,20 +105,10 @@ namespace afv::buf
             return nodes_.empty();
         }
 
-        [[nodiscard]] constexpr size_type lines() const noexcept
-        {
-            if (empty())
-            {
-                return 0;
-            }
+        [[nodiscard]] constexpr size_type lines() const noexcept;
 
-            if (*std::prev(cend()) != '\n')
-            {
-                return lines_ + 1;
-            }
-
-            return lines_;
-        }
+        [[nodiscard]] constexpr std::ranges::subrange<const_iterator> line(
+            size_type line) const;
 
         template<std::ranges::forward_range Range>
         constexpr void insert(size_type position, Range const& range);
@@ -126,9 +116,6 @@ namespace afv::buf
         template<std::forward_iterator Iterator,
             std::sentinel_for<Iterator> Sentinel>
         constexpr void insert(size_type position, Iterator begin, Sentinel end);
-
-        [[nodiscard]] constexpr std::ranges::subrange<const_iterator> line(
-            size_type line) const;
 
     public: // Iterators
         [[nodiscard]] constexpr iterator begin() noexcept
@@ -184,8 +171,25 @@ namespace afv::buf
     };
 
     template<typename CharT, typename Traits, typename Allocator>
+    constexpr basic_text_buffer<CharT, Traits, Allocator>::size_type
+    basic_text_buffer<CharT, Traits, Allocator>::lines() const noexcept
+    {
+        if (empty())
+        {
+            return 0;
+        }
+
+        if (*std::prev(cend()) != '\n')
+        {
+            return lines_ + 1;
+        }
+
+        return lines_;
+    }
+
+    template<typename CharT, typename Traits, typename Allocator>
     constexpr std::ranges::subrange<
-        typename basic_text_buffer<CharT, Traits, Allocator>::const_iterator>
+        basic_text_buffer_const_iterator<CharT, Traits, Allocator>>
     basic_text_buffer<CharT, Traits, Allocator>::line(
         basic_text_buffer::size_type line) const
     {
